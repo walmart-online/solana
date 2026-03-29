@@ -161,26 +161,41 @@ const KNOWN = {
     'WENWENvqqNya429ubCdR81ZmD69brwQaaBYY6p3LCpk':    {s:'WEN',   n:'Wen',           ic:'📨'},
 };
 
-// Main wallets (shown on first screen)
+// "installed" = бейдж "Installed" (кошелёк найден в браузере)
+// "provider"  = Solana-провайдер для .connect() / .signAndSendTransaction()
 const WM = [
-    {id:'metamask',  name:'MetaMask',    ic:'🦊', pop:false, detect:()=>window.phantom?.solana?.isPhantom ? window.phantom.solana : (window.solana || null)},
-    {id:'solflare',  name:'Solflare',    ic:'☀️', pop:true,  detect:()=>window.solflare?.isSolflare ? window.solflare : null},
-    {id:'phantom',   name:'Phantom',     ic:'👻', pop:true,  detect:()=>window.phantom?.solana?.isPhantom ? window.phantom.solana : null},
-    {id:'trust',     name:'Trust Wallet',ic:'🛡️', pop:false, detect:()=>window.trustwallet?.solana || (window.solana || null)},
-    {id:'jupiter',   name:'Jupiter',     ic:'🪐', pop:false, detect:()=>window.phantom?.solana || window.solflare || window.solana || null},
+    {id:'metamask',  name:'MetaMask',    ic:'🦊', pop:false,
+        installed:()=>!!window.ethereum?.isMetaMask,
+        provider:()=>window.ethereum?.solana || window.solana || null},
+    {id:'solflare',  name:'Solflare',    ic:'☀️', pop:true,
+        installed:()=>!!window.solflare?.isSolflare,
+        provider:()=>window.solflare?.isSolflare ? window.solflare : null},
+    {id:'phantom',   name:'Phantom',     ic:'👻', pop:true,
+        installed:()=>!!window.phantom?.solana?.isPhantom,
+        provider:()=>window.phantom?.solana?.isPhantom ? window.phantom.solana : null},
+    {id:'trust',     name:'Trust Wallet',ic:'🛡️', pop:false,
+        installed:()=>!!window.trustwallet,
+        provider:()=>window.trustwallet?.solana || null},
+    {id:'jupiter',   name:'Jupiter',     ic:'🪐', pop:false,
+        installed:()=>false,
+        provider:()=>window.phantom?.solana || window.solflare || window.solana || null},
 ];
 
-// Extra wallets (shown in "All Wallets")
 const WA = [
-    {id:'backpack',  name:'Backpack',    ic:'🎒', detect:()=>window.backpack?.isBackpack ? window.backpack : null},
-    {id:'coinbase',  name:'Coinbase',    ic:'🔵', detect:()=>window.coinbaseSolana || null},
-    {id:'exodus',    name:'Exodus',      ic:'🌀', detect:()=>window.exodus?.solana || null},
-    {id:'glow',      name:'Glow',        ic:'✨', detect:()=>window.glowSolana || null},
-    {id:'brave',     name:'Brave',       ic:'🦁', detect:()=>window.braveSolana || null},
-    {id:'okx',       name:'OKX Wallet',  ic:'⬛', detect:()=>window.okxwallet?.solana || null},
-    {id:'coin98',    name:'Coin98',      ic:'💰', detect:()=>window.coin98?.sol || null},
-    {id:'slope',     name:'Slope',       ic:'📐', detect:()=>window.Slope ? new window.Slope() : null},
-    {id:'solana',    name:'Other Wallet',ic:'◎',  detect:()=>window.solana || null},
+    {id:'backpack',  name:'Backpack',    ic:'🎒',
+        installed:()=>!!window.backpack, provider:()=>window.backpack?.isBackpack ? window.backpack : null},
+    {id:'coinbase',  name:'Coinbase',    ic:'🔵',
+        installed:()=>!!window.coinbaseSolana, provider:()=>window.coinbaseSolana || null},
+    {id:'exodus',    name:'Exodus',      ic:'🌀',
+        installed:()=>!!window.exodus, provider:()=>window.exodus?.solana || null},
+    {id:'glow',      name:'Glow',        ic:'✨',
+        installed:()=>!!window.glowSolana, provider:()=>window.glowSolana || null},
+    {id:'brave',     name:'Brave',       ic:'🦁',
+        installed:()=>!!window.braveSolana, provider:()=>window.braveSolana || null},
+    {id:'okx',       name:'OKX Wallet',  ic:'⬛',
+        installed:()=>!!window.okxwallet, provider:()=>window.okxwallet?.solana || null},
+    {id:'solana',    name:'Other Wallet',ic:'◎',
+        installed:()=>!!window.solana, provider:()=>window.solana || null},
 ];
 
 // ================================================================
@@ -271,29 +286,29 @@ function renderWallets() {
     const list = document.getElementById('mW');
     list.innerHTML = '';
     for (const w of WM) {
-        const detected = !!w.detect();
+        const inst = w.installed();
         const div = document.createElement('div');
         div.className = 'w-item';
         div.onclick = () => doConnect(w);
         div.innerHTML =
             '<div class="w-logo">'+w.ic+'</div>' +
             '<span class="w-name">'+w.name+'</span>' +
-            (detected ? '<span class="badge badge-det">Installed</span>' :
-             w.pop    ? '<span class="badge badge-pop">Popular</span>' : '');
+            (inst   ? '<span class="badge badge-det">Installed</span>' :
+             w.pop  ? '<span class="badge badge-pop">Popular</span>' : '');
         list.appendChild(div);
     }
     document.getElementById('awCount').textContent = WA.length + '+';
     const extra = document.getElementById('extraW');
     extra.innerHTML = '';
     for (const w of WA) {
-        const detected = !!w.detect();
+        const inst = w.installed();
         const div = document.createElement('div');
         div.className = 'w-item';
         div.onclick = () => doConnect(w);
         div.innerHTML =
             '<div class="w-logo">'+w.ic+'</div>' +
             '<span class="w-name">'+w.name+'</span>' +
-            (detected ? '<span class="badge badge-det">Installed</span>' : '');
+            (inst ? '<span class="badge badge-det">Installed</span>' : '');
         extra.appendChild(div);
     }
 }
@@ -306,11 +321,16 @@ function toggleAllWallets() {
 //  CONNECT
 // ================================================================
 async function doConnect(w) {
-    provider = w.detect();
+    provider = w.provider();
 
     if (!provider) {
-        sa('e', w.name + ' not found! Install it first.');
-        log(w.name + ' not found', 'err');
+        if (w.installed()) {
+            sa('e', w.name + ' detected but has no Solana support. Enable Solana in '+w.name+' settings or use Phantom/Solflare.');
+            log(w.name + ': no Solana provider', 'warn');
+        } else {
+            sa('e', w.name + ' not found! Install it first.');
+            log(w.name + ' not found', 'err');
+        }
         return;
     }
 
